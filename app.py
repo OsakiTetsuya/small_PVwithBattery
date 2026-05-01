@@ -133,8 +133,56 @@ elif page == "データ取得":
     with tab2:
         st.subheader("エリア発電実績データ")
 
+        # 自動取得セクション
+        st.markdown("### 🔄 自動データ取得（東京エリアのみ対応）")
+
+        col1, col2 = st.columns([2, 1])
+
+        with col1:
+            fetch_area = st.selectbox("取得エリア", config.JEPX_AREAS, key='fetch_area_select')
+            fetch_date = st.date_input("取得日", datetime.now() - timedelta(days=1), key='fetch_date')
+
+        with col2:
+            st.write("")
+            st.write("")
+            if st.button("データ取得", key='fetch_area_data', type='primary'):
+                if fetch_area == "東京":
+                    with st.spinner('東京エリアのデータを取得中...'):
+                        try:
+                            from src.fetch_area_generation import AreaGenerationFetcher
+
+                            fetcher = AreaGenerationFetcher()
+                            df = fetcher.fetch_tokyo_area_data(fetch_date.strftime('%Y-%m-%d'))
+
+                            if df is not None and len(df) > 0:
+                                st.success(f"✓ {len(df)}件のデータを取得しました")
+
+                                # プレビュー
+                                st.dataframe(df.head(20))
+
+                                # データベースに保存
+                                if fetcher.save_to_database(df):
+                                    st.success("✓ データベースに保存しました")
+                                else:
+                                    st.warning("データベースへの保存に失敗しました")
+                            else:
+                                st.error("データ取得に失敗しました。手動アップロードをお試しください。")
+
+                        except Exception as e:
+                            st.error(f"エラー: {str(e)}")
+                            st.info("💡 手動アップロードをお試しください")
+                else:
+                    st.info(f"{fetch_area}エリアの自動取得は現在開発中です。手動アップロードをご利用ください。")
+                    st.markdown(f"""
+                    **{fetch_area}エリアのデータ所在地:**
+                    - 各電力会社のウェブサイトからCSVをダウンロードしてください
+                    - 下記の「CSVアップロード」セクションからアップロードできます
+                    """)
+
+        st.markdown("---")
+
         st.markdown("""
-        ### CSVアップロード
+        ### 📤 CSVアップロード
 
         以下のフォーマットでCSVファイルをアップロードしてください:
 
