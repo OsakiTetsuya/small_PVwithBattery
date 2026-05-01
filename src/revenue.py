@@ -138,13 +138,18 @@ def calculate_daily_summary(df: pd.DataFrame) -> pd.DataFrame:
     df['datetime'] = pd.to_datetime(df['datetime'])
     df['date'] = df['datetime'].dt.date
 
-    daily = df.groupby('date').agg({
+    agg_dict = {
         'pv_generation_kwh': 'sum',
         'export_kwh': 'sum',
         'revenue_yen': 'sum',
-        'battery_charge_kwh': 'sum' if 'battery_charge_kwh' in df.columns else lambda x: 0,
-        'battery_discharge_kwh': 'sum' if 'battery_discharge_kwh' in df.columns else lambda x: 0,
-    }).reset_index()
+    }
+
+    if 'battery_charge_kwh' in df.columns:
+        agg_dict['battery_charge_kwh'] = 'sum'
+    if 'battery_discharge_kwh' in df.columns:
+        agg_dict['battery_discharge_kwh'] = 'sum'
+
+    daily = df.groupby('date').agg(agg_dict).reset_index()
 
     daily['average_price_yen_per_kwh'] = daily['revenue_yen'] / daily['export_kwh']
 
@@ -169,13 +174,18 @@ def calculate_monthly_summary(df: pd.DataFrame) -> pd.DataFrame:
     df['datetime'] = pd.to_datetime(df['datetime'])
     df['month'] = df['datetime'].dt.to_period('M')
 
-    monthly = df.groupby('month').agg({
+    agg_dict = {
         'pv_generation_kwh': 'sum',
         'export_kwh': 'sum',
         'revenue_yen': 'sum',
-        'battery_charge_kwh': 'sum' if 'battery_charge_kwh' in df.columns else lambda x: 0,
-        'battery_discharge_kwh': 'sum' if 'battery_discharge_kwh' in df.columns else lambda x: 0,
-    }).reset_index()
+    }
+
+    if 'battery_charge_kwh' in df.columns:
+        agg_dict['battery_charge_kwh'] = 'sum'
+    if 'battery_discharge_kwh' in df.columns:
+        agg_dict['battery_discharge_kwh'] = 'sum'
+
+    monthly = df.groupby('month').agg(agg_dict).reset_index()
 
     monthly['average_price_yen_per_kwh'] = monthly['revenue_yen'] / monthly['export_kwh']
     monthly['month'] = monthly['month'].astype(str)
